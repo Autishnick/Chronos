@@ -26,23 +26,23 @@ export default function Dashboard() {
       try {
         const data = await api.getCapsules();
         const capsulesData = data || [];
-        
+
         // Extract unique content paths to generate signed URLs for private media
         const paths = Array.from(new Set(capsulesData.map((c: any) => c.content_url).filter(Boolean)));
-        
+
         if (paths.length > 0) {
-           // Batch generate signed URLs (valid for 1 hour)
-           const { data: signData, error } = await supabase.storage.from('capsule-media').createSignedUrls(paths as string[], 3600);
-           if (!error && signData) {
-              const urlMap = Object.fromEntries(signData.map((s: any) => [s.path, s.signedUrl]));
-              const enhancedData = capsulesData.map((c: any) => ({
-                 ...c,
-                 signed_content_url: c.content_url ? urlMap[c.content_url] : null
-              }));
-              setCapsules(enhancedData);
-              setLoading(false);
-              return;
-           }
+          // Batch generate signed URLs (valid for 1 hour)
+          const { data: signData, error } = await supabase.storage.from('capsule-media').createSignedUrls(paths as string[], 3600);
+          if (!error && signData) {
+            const urlMap = Object.fromEntries(signData.map((s: any) => [s.path, s.signedUrl]));
+            const enhancedData = capsulesData.map((c: any) => ({
+              ...c,
+              signed_content_url: c.content_url ? urlMap[c.content_url] : null
+            }));
+            setCapsules(enhancedData);
+            setLoading(false);
+            return;
+          }
         }
 
         setCapsules(capsulesData);
@@ -58,13 +58,13 @@ export default function Dashboard() {
   const calculateTimeLeft = (unlockDate: string) => {
     const timeDiff = new Date(unlockDate).getTime() - new Date().getTime();
     if (timeDiff <= 0) return 'Unlocked';
-    
+
     const years = Math.floor(timeDiff / (1000 * 60 * 60 * 24 * 365));
     const months = Math.floor((timeDiff % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30));
-    
+
     if (years > 0) return `${years} years ${months} month left`;
     if (months > 0) return `${months} months left`;
-    
+
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
     return `${days} days left`;
   };
@@ -97,12 +97,12 @@ export default function Dashboard() {
   const filteredCapsules = capsules.filter(capsule => {
     const isUnlocked = new Date() >= new Date(capsule.unlock_date);
     const meta = parseMetadata(capsule.location_text);
-    
+
     // Tab filtering
     let tabMatch = true;
     if (activeTab === 'Active') tabMatch = !isUnlocked;
     if (activeTab === 'Unlocked') tabMatch = isUnlocked;
-    if (activeTab === 'Archive') tabMatch = capsule.status === 'archived';
+
 
     // Search filtering
     const searchMatch = meta.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -117,22 +117,22 @@ export default function Dashboard() {
   return (
     <div className="px-5 pt-8 pb-32">
       <h1 className="text-4xl text-brand-light mb-6 text-center shadow-accent">Library Chronos</h1>
-      
+
       <div className="relative mb-4 glass-input flex items-center p-0 pr-4">
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Find a capsule" 
-          className="w-full bg-transparent p-3 pl-5 outline-none rounded-2xl text-black placeholder-slate-500" 
+          placeholder="Find a capsule"
+          className="w-full bg-transparent p-3 pl-5 outline-none rounded-2xl text-black placeholder-slate-500"
         />
         <Filter className="text-primary-600" />
       </div>
 
       <div className="flex gap-2 overflow-x-auto hide-scroll mb-8">
-        {['All', 'Active', 'Unlocked', 'Archive'].map(tab => (
-          <button 
-            key={tab} 
+        {['All', 'Active', 'Unlocked'].map(tab => (
+          <button
+            key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition ${activeTab === tab ? 'bg-primary-500 text-white' : 'bg-primary-500/30 text-white'}`}
           >
@@ -162,10 +162,10 @@ export default function Dashboard() {
                     {isVideo && capsule.signed_content_url ? (
                       <video src={fullMediaUrl} className="w-full h-full object-cover bg-slate-200" muted playsInline />
                     ) : (
-                      <img 
+                      <img
                         src={fullMediaUrl}
                         onError={(e) => { e.currentTarget.src = envelopePic }}
-                        alt="Memory thumbnail" 
+                        alt="Memory thumbnail"
                         className="w-full h-full object-cover bg-slate-200"
                       />
                     )}
@@ -198,11 +198,11 @@ export default function Dashboard() {
                   {isVideo && capsule.signed_content_url ? (
                     <video src={fullMediaUrl} className="w-full h-full object-cover" muted playsInline />
                   ) : (
-                    <img 
-                      src={fullMediaUrl} 
+                    <img
+                      src={fullMediaUrl}
                       onError={(e) => { e.currentTarget.src = envelopePic }}
-                      alt="Thumbnail" 
-                      className="w-full h-full object-cover" 
+                      alt="Thumbnail"
+                      className="w-full h-full object-cover"
                     />
                   )}
                 </div>
@@ -214,11 +214,11 @@ export default function Dashboard() {
                   <p className="text-white/70">Unlocks: {formatDate(capsule.unlock_date)}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between gap-3 text-xs font-semibold">
                 <div className="h-2 flex-1 bg-white/20 rounded-full overflow-hidden flex shadow-inner border border-white/10">
-                  <div 
-                    className="h-full bg-white/50" 
+                  <div
+                    className="h-full bg-white/50"
                     style={{ width: `${progress}%`, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.2) 10px, rgba(255,255,255,0.2) 20px)' }}
                   ></div>
                 </div>

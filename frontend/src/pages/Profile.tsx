@@ -10,7 +10,7 @@ export default function Profile() {
   const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Initialize form with existing user metadata or sensible defaults
   const [formData, setFormData] = useState({
@@ -21,6 +21,21 @@ export default function Profile() {
     dob: user?.user_metadata?.dob || '',
     avatarUrl: user?.user_metadata?.avatarUrl || ''
   });
+
+  // Sync formData with user metadata when it loaded
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.user_metadata?.firstName || prev.firstName,
+        surname: user.user_metadata?.surname || prev.surname,
+        email: user.email || prev.email,
+        recoveryEmail: user.user_metadata?.recoveryEmail || prev.recoveryEmail,
+        dob: user.user_metadata?.dob || prev.dob,
+        avatarUrl: user.user_metadata?.avatarUrl || prev.avatarUrl
+      }));
+    }
+  }, [user]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -66,7 +81,8 @@ export default function Profile() {
         firstName: formData.firstName,
         surname: formData.surname,
         recoveryEmail: formData.recoveryEmail,
-        dob: formData.dob
+        dob: formData.dob,
+        avatarUrl: formData.avatarUrl // Ensure avatarUrl is preserved during full save
       }
     });
     

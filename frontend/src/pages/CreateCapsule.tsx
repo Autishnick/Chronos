@@ -77,6 +77,7 @@ export default function CreateCapsule() {
     }
 
     const withPreviews = newFiles.map(f => {
+      (f as any).id = Math.random().toString(36).substr(2, 9);
       (f as any).preview = URL.createObjectURL(f);
       return f;
     });
@@ -200,7 +201,7 @@ export default function CreateCapsule() {
               files.map((f, i) => {
                 const isVideo = f.type.startsWith('video/');
                 return (
-                  <div key={i} className="relative flex-shrink-0">
+                  <div key={(f as any).id} className="relative flex-shrink-0">
                     {isVideo ? (
                       <video src={(f as any).preview} className="h-24 w-24 object-cover rounded shadow border border-white/10" muted playsInline />
                     ) : (
