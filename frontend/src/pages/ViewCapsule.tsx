@@ -35,7 +35,11 @@ export default function ViewCapsule() {
         const data = await api.getCapsuleById(id);
         setCapsule(data);
         
-        let meta = { name: 'Unknown Capsule', location: 'Unknown', description: '' };
+        let meta: { name: string, location: string, description: string, media?: string[] } = { 
+          name: 'Unknown Capsule', 
+          location: 'Unknown', 
+          description: '' 
+        };
         if (data.location_text) {
            try {
               const parsed = JSON.parse(data.location_text);
