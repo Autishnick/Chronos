@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../services/apiClient';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,7 +42,6 @@ export default function Home() {
   }, []);
 
   const activeCapsules = capsules.filter(c => new Date() < new Date(c.unlock_date));
-  const recentCapsule = activeCapsules[0];
 
   const calculateTimeLeft = (unlockDate: string) => {
     const timeDiff = new Date(unlockDate).getTime() - new Date().getTime();

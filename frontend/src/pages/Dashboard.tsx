@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../services/apiClient';
 import { supabase } from '../services/supabase';
 import { Link } from 'react-router-dom';
-import { Filter, Plus, ImagePlay } from 'lucide-react';
+import { Plus, ImagePlay } from 'lucide-react';
 import envelopePic from '../assets/envelope.png';
 
 interface Capsule {

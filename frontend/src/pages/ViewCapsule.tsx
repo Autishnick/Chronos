@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { api } from '../services/apiClient';
@@ -20,7 +20,11 @@ export default function ViewCapsule() {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState<{name?: string, location?: string, description?: string, media?: string[]}>({});
+  const [metadata, setMetadata] = useState<{name: string, location: string, description: string, media?: string[]}>({
+    name: 'Unknown Capsule',
+    location: 'Unknown',
+    description: ''
+  });
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
