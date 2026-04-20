@@ -13,8 +13,8 @@ const transporter = nodemailer.createTransport({
 
 export const initCronJobs = () => {
   if (!supabaseAdmin) {
-     console.error('[Cron Job] SUPABASE_SERVICE_ROLE_KEY missing. Automated emails will not be sent.');
-     return;
+    console.error('[Cron Job] SUPABASE_SERVICE_ROLE_KEY missing. Automated emails will not be sent.');
+    return;
   }
 
   // Schedule task to run every minute
@@ -30,12 +30,12 @@ export const initCronJobs = () => {
       if (error) {
         // Handle missing column error gracefully
         if (error.code === '42703') {
-           console.log('[Cron Job] Waiting for email_notified column to be created in Supabase...'); 
-           return;
+          console.log('[Cron Job] Waiting for email_notified column to be created in Supabase...');
+          return;
         }
         throw error;
       }
-      
+
       if (!capsules || capsules.length === 0) return;
 
       console.log(`[Cron Job] Found ${capsules.length} capsule(s) ready to notify.`);
@@ -43,7 +43,7 @@ export const initCronJobs = () => {
       for (const capsule of capsules) {
         // Fetch user email via Admin Auth (bypasses RLS)
         const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(capsule.user_id);
-        
+
         if (userError || !user) {
           console.error(`[Cron Job] Failed to fetch user email for capsule ${capsule.id}`);
           continue;
@@ -70,7 +70,7 @@ export const initCronJobs = () => {
                 The time has come. The digital capsule <strong>"${capsuleName}"</strong> that you packed in the past is finally ready to be opened. Take a trip down memory lane!
               </p>
               <div style="margin: 40px 0;">
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/capsule/${capsule.id}" style="background-color: #624BFF; color: white; padding: 16px 32px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(98,75,255,0.4);">
+                <a href="${process.env.FRONTEND_URL || 'https://chronos-jb5d.onrender.com/'}/capsule/${capsule.id}" style="background-color: #624BFF; color: white; padding: 16px 32px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(98,75,255,0.4);">
                   Unlock Memory
                 </a>
               </div>
@@ -90,7 +90,7 @@ export const initCronJobs = () => {
             .from('capsules')
             .update({ email_notified: true })
             .eq('id', capsule.id);
-            
+
         } catch (mailError) {
           console.error(`[Cron Job] Mail rejected for ${userEmail}:`, mailError.message);
         }
