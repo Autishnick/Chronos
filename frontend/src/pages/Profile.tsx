@@ -24,18 +24,31 @@ export default function Profile() {
 
   // Sync formData with user metadata when it loaded
   useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        firstName: user.user_metadata?.firstName || prev.firstName,
-        surname: user.user_metadata?.surname || prev.surname,
-        email: user.email || prev.email,
-        recoveryEmail: user.user_metadata?.recoveryEmail || prev.recoveryEmail,
-        dob: user.user_metadata?.dob || prev.dob,
-        avatarUrl: user.user_metadata?.avatarUrl || prev.avatarUrl
-      }));
+    if (user && !isEditing) {
+      setFormData({
+        firstName: user.user_metadata?.firstName || '',
+        surname: user.user_metadata?.surname || '',
+        email: user.email || '',
+        recoveryEmail: user.user_metadata?.recoveryEmail || '',
+        dob: user.user_metadata?.dob || '',
+        avatarUrl: user.user_metadata?.avatarUrl || ''
+      });
     }
-  }, [user]);
+  }, [user, isEditing]);
+
+  const handleCancel = () => {
+    if (user) {
+      setFormData({
+        firstName: user.user_metadata?.firstName || '',
+        surname: user.user_metadata?.surname || '',
+        email: user.email || '',
+        recoveryEmail: user.user_metadata?.recoveryEmail || '',
+        dob: user.user_metadata?.dob || '',
+        avatarUrl: user.user_metadata?.avatarUrl || ''
+      });
+    }
+    setIsEditing(false);
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -72,6 +85,14 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (formData.recoveryEmail && !emailRegex.test(formData.recoveryEmail)) {
+      toast.error('Please enter a valid recovery email');
+      return;
+    }
+
     setLoading(true);
     const savingToastId = toast.loading('Saving profile...');
     
@@ -189,7 +210,7 @@ export default function Profile() {
             <button
               type="button"
               className="flex-1 btn-primary py-2 text-sm !bg-none bg-slate-500"
-              onClick={() => setIsEditing(false)}
+              onClick={handleCancel}
             >
               Cancel
             </button>

@@ -27,6 +27,11 @@ export default function ViewCapsule() {
   });
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [fullScreenMedia, setFullScreenMedia] = useState<string | null>(null);
+
+  const isVideo = (url: string) => {
+    return /\.(mp4|webm|ogg|mov|m4v)($|\?)/i.test(url);
+  };
 
   useEffect(() => {
     async function init() {
@@ -151,8 +156,15 @@ export default function ViewCapsule() {
         <div className="space-y-6">
           {/* Main Photo (Polaroid style) */}
           {mediaUrl && (
-             <div className="bg-white p-3 pb-8 rounded shadow-2xl rotate-2 mx-auto w-4/5 max-w-[300px]">
-               <img src={mediaUrl} alt="Memory" className="w-full h-auto object-cover bg-slate-200 aspect-square" />
+             <div 
+               className="bg-white p-3 pb-8 rounded shadow-2xl rotate-2 mx-auto w-4/5 max-w-[300px] cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+               onClick={() => setFullScreenMedia(mediaUrl)}
+             >
+               {isVideo(mediaUrl) ? (
+                 <video src={mediaUrl} className="w-full h-auto object-cover bg-slate-200 aspect-square" muted />
+               ) : (
+                 <img src={mediaUrl} alt="Memory" className="w-full h-auto object-cover bg-slate-200 aspect-square" />
+               )}
              </div>
           )}
 
@@ -174,12 +186,52 @@ export default function ViewCapsule() {
           {mediaUrls.length > 1 && (
             <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-primary-500/50 relative">
                {mediaUrls.slice(1).map((url, idx) => (
-                 <div key={idx} className="aspect-square bg-slate-800 rounded overflow-hidden shadow-inner">
-                   <img src={url} className="w-full h-full object-cover" alt={`Memory ${idx + 2}`} />
+                 <div 
+                   key={idx} 
+                   className="aspect-square bg-slate-800 rounded overflow-hidden shadow-inner cursor-pointer hover:opacity-80 transition-opacity"
+                   onClick={() => setFullScreenMedia(url)}
+                 >
+                   {isVideo(url) ? (
+                     <video src={url} className="w-full h-full object-cover" muted />
+                   ) : (
+                     <img src={url} className="w-full h-full object-cover" alt={`Memory ${idx + 2}`} />
+                   )}
                  </div>
                ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Fullscreen Overlay */}
+      {fullScreenMedia && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-300"
+          onClick={() => setFullScreenMedia(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors z-[110]"
+            onClick={() => setFullScreenMedia(null)}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          
+          <div className="max-w-full max-h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {isVideo(fullScreenMedia) ? (
+              <video 
+                src={fullScreenMedia} 
+                className="max-w-full max-h-[90vh] rounded-lg shadow-2xl" 
+                controls 
+                autoPlay 
+              />
+            ) : (
+              <img 
+                src={fullScreenMedia} 
+                alt="Full Screen Memory" 
+                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" 
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

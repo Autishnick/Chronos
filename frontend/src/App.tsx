@@ -79,8 +79,8 @@ function App() {
             {/* Default redirect */}
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
-          <BottomNav />
         </div>
+        <BottomNav />
       </AuthProvider>
     </Router>
   );

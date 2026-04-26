@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { supabase } from '../services/supabase';
@@ -17,11 +17,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function MapPicker({ setLocationText }: { setLocationText: (t: string) => void }) {
-  const [position, setPosition] = useState<L.LatLng | null>(null);
-
-  useMapEvents({
+function MapPicker({ 
+  setLocationText, 
+  position, 
+  setPosition, 
+  isMapUpdatingRef 
+}: { 
+  setLocationText: (t: string) => void;
+  position: L.LatLng | null;
+  setPosition: (p: L.LatLng | null) => void;
+  isMapUpdatingRef: React.MutableRefObject<boolean>;
+}) {
+  const map = useMapEvents({
     click: async (e) => {
+      isMapUpdatingRef.current = true;
       setPosition(e.latlng);
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&accept-language=en&lat=${e.latlng.lat}&lon=${e.latlng.lng}`);
@@ -31,9 +40,17 @@ function MapPicker({ setLocationText }: { setLocationText: (t: string) => void }
         setLocationText(locName + (address.country ? `, ${address.country}` : ''));
       } catch (err) {
         console.error(err);
+      } finally {
+        setTimeout(() => { isMapUpdatingRef.current = false; }, 500); 
       }
     }
   });
+
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, 11, { duration: 1.5 });
+    }
+  }, [position, map]);
 
   return position === null ? null : <Marker position={position} />;
 }
@@ -41,8 +58,30 @@ function MapPicker({ setLocationText }: { setLocationText: (t: string) => void }
 export default function CreateCapsule() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [locationText, setLocationText] = useState('');
+  const [position, setPosition] = useState<L.LatLng | null>(null);
+  const isMapUpdatingRef = useRef(false);
+
+  useEffect(() => {
+    if (!locationText || locationText.length < 3 || isMapUpdatingRef.current) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationText)}&limit=1`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          setPosition(new L.LatLng(parseFloat(lat), parseFloat(lon)));
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+      }
+    }, 1200);
+
+    return () => clearTimeout(timeoutId);
+  }, [locationText]);
   const [nameText, setNameText] = useState('');
   const [description, setDescription] = useState('');
   const [unlockDate, setUnlockDate] = useState('');
@@ -192,26 +231,44 @@ export default function CreateCapsule() {
         </div>
 
         <div className="space-y-2">
-          <label className="bg-primary-500 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-md inline-block cursor-pointer hover:bg-primary-400 transition-colors">
-            Add photos and videos (up to 10)
-            <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFileChange} />
-          </label>
-          <div className="border border-white/20 p-2 min-h-[100px] flex gap-2 overflow-x-auto hide-scroll items-center rounded relative bg-black/10">
+          <div className="flex items-center justify-between">
+            <label 
+              className="bg-primary-500 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-md inline-block cursor-pointer hover:bg-primary-400 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Add photos and videos (up to 10)
+            </label>
+            <input 
+              ref={fileInputRef}
+              type="file" 
+              multiple 
+              accept="image/*,video/*" 
+              className="hidden" 
+              onChange={handleFileChange} 
+            />
+          </div>
+          <div 
+            className="border border-white/20 p-2 min-h-[140px] flex gap-2 overflow-x-auto hide-scroll items-center rounded relative bg-black/10 cursor-pointer hover:bg-black/20 border-dashed hover:border-white/40 transition-all group"
+            onClick={() => fileInputRef.current?.click()}
+          >
             {files.length > 0 ? (
               files.map((f, i) => {
                 const isVideo = f.type.startsWith('video/');
                 return (
                   <div key={(f as any).id} className="relative flex-shrink-0">
                     {isVideo ? (
-                      <video src={(f as any).preview} className="h-24 w-24 object-cover rounded shadow border border-white/10" muted playsInline />
+                      <video src={(f as any).preview} className="h-28 w-28 object-cover rounded shadow border border-white/10" muted playsInline />
                     ) : (
-                      <img src={(f as any).preview} className="h-24 w-24 object-cover rounded shadow border border-white/10" alt={`Preview ${i}`} />
+                      <img src={(f as any).preview} className="h-28 w-28 object-cover rounded shadow border border-white/10" alt={`Preview ${i}`} />
                     )}
                     {i === 0 && <span className="absolute top-1 left-1 bg-primary-500 text-white text-[10px] px-2 py-0.5 rounded shadow z-10 pointer-events-none">Cover</span>}
                     <button
                       type="button"
-                      onClick={() => removeFile(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs hover:bg-red-500 transition-colors z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(i);
+                      }}
+                      className="absolute top-1 right-1 bg-black/60 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs hover:bg-red-500 transition-colors z-20 shadow-lg"
                     >
                       ✕
                     </button>
@@ -219,7 +276,11 @@ export default function CreateCapsule() {
                 )
               })
             ) : (
-              <div className="text-slate-400 text-sm italic py-4 w-full text-center">No files selected yet</div>
+              <div className="flex flex-col items-center justify-center w-full py-8 text-slate-400 group-hover:text-slate-300 transition-colors">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2 opacity-50"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span className="text-sm italic">No files selected yet</span>
+                <span className="text-[10px] mt-1 uppercase tracking-wider opacity-60">Click here to upload</span>
+              </div>
             )}
           </div>
         </div>
@@ -253,7 +314,12 @@ export default function CreateCapsule() {
         <div className="w-full h-48 bg-slate-800 rounded-2xl relative overflow-hidden shadow-inner border border-white/10 z-0">
           <MapContainer center={[49.8397, 24.0297]} zoom={11} style={{ height: '100%', width: '100%' }} zoomControl={false}>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-            <MapPicker setLocationText={setLocationText} />
+            <MapPicker 
+              setLocationText={setLocationText} 
+              position={position} 
+              setPosition={setPosition} 
+              isMapUpdatingRef={isMapUpdatingRef} 
+            />
           </MapContainer>
         </div>
 

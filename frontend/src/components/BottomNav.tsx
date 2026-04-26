@@ -8,7 +8,7 @@ export default function BottomNav() {
   if (location.pathname === '/auth') return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px]">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] z-50">
       <div className="glass-panel rounded-full flex justify-around items-center p-3 px-6 shadow-xl">
         <Link 
           to="/home" 
