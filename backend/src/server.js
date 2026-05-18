@@ -1,6 +1,4 @@
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 // Load environment variables before anything else
 dotenv.config();
