@@ -10,3 +10,4 @@ router.post('/', createCapsule);
 router.delete('/:id', deleteCapsule);
 
 export default router;
+
