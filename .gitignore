@@ -4,7 +4,6 @@ backend/node_modules/
 frontend/node_modules/
 
 # Environment Variables (Secrets)
-.env
 backend/.env
 frontend/.env
 *.local
@@ -22,3 +21,4 @@ yarn-error.log*
 # System files
 .DS_Store
 Thumbs.db
+config.bat
